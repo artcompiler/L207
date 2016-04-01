@@ -40,36 +40,45 @@ let translate = (function() {
   let edgesNode;
   function str(node, options, resume) {
     let val = node.elts[0];
-    resume([], {
-      value: val
-    });
+    resume([], val);
   }
   function num(node, options, resume) {
     let val = node.elts[0];
-    resume([], {
-      value: val
-    });
+    resume([], val);
   }
   function ident(node, options, resume) {
     let val = node.elts[0];
-    resume([], [val]);
+    resume([], val);
   }
   function bool(node, options, resume) {
     let val = node.elts[0];
-    resume([], [val]);
+    resume([], val);
   }
-  function add(node, options, resume) {
+  function map(node, options, resume) {
+    resume([], {
+      type: "map",
+      options: {
+        zoom: 1,
+        center: {
+          lat: 0,
+          lng: 0,
+        },
+      },
+    });
+  };
+  function center(node, options, resume) {
     visit(node.elts[0], options, function (err1, val1) {
-      val1 = +val1.value;
-      if (isNaN(val1)) {
-        err1 = err1.concat(error("Argument must be a number.", node.elts[0]));
-      }
       visit(node.elts[1], options, function (err2, val2) {
-        val2 = +val2.value;
-        if (isNaN(val2)) {
-          err2 = err2.concat(error("Argument must be a number.", node.elts[1]));
-        }
-        resume([].concat(err1).concat(err2), val1 + val2);
+        val1.options.center = val2;
+        resume([].concat(err1).concat(err2), val1);
+      });
+    });
+  };
+  function zoom(node, options, resume) {
+    visit(node.elts[0], options, function (err1, val1) {
+      visit(node.elts[1], options, function (err2, val2) {
+        val1.options.zoom = +val2;
+        resume([].concat(err1).concat(err2), val1);
       });
     });
   };
@@ -77,7 +86,7 @@ let translate = (function() {
     visit(node.elts[0], options, function (err1, val1) {
       visit(node.elts[1], options, function (err2, val2) {
         resume([].concat(err1).concat(err2), {
-          value: val1.value,
+          value: val1,
           style: val2,
         });
       });
@@ -111,15 +120,18 @@ let translate = (function() {
       visit(node.elts[0], options, function (err1, val1) {
         node.elts.shift();
         record(node, options, function (err2, val2) {
-          resume([].concat(err1).concat(err2), [].concat(val1).concat(val2));
+          val2[val1.key] = +val1.val;
+          resume([].concat(err1).concat(err2), val2);
         });
       });
     } else if (node.elts && node.elts.length > 0) {
       visit(node.elts[0], options, function (err1, val1) {
-        resume([].concat(err1), [].concat(val1));
+        var val = {};
+        val[val1.key] = +val1.val;
+        resume([].concat(err1), val);
       });
     } else {
-      resume([], []);
+      resume([], {});
     }
   };
   function exprs(node, options, resume) {
@@ -156,7 +168,9 @@ let translate = (function() {
     "LIST": list,
     "RECORD": record,
     "BINDING": binding,
-    "ADD" : add,
+    "MAP" : map,
+    "CENTER" : center,
+    "ZOOM" : zoom,
     "STYLE" : style,
   }
   return translate;

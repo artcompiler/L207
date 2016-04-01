@@ -1,5 +1,5 @@
 {
-  "name": "L000",
+  "name": "L207",
   "version": "0.0.0",
   "description": "Compiler as a service.",
   "author": "Art Compiler LLC",
@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/artcompiler/L000"
+    "url": "https://github.com/artcompiler/L207"
   },
   "babel": {
     "presets": ["es2015", "react"]

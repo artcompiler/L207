@@ -8,56 +8,63 @@
 import {assert, message, messages, reserveCodeRange} from "./assert";
 import * as React from "react";
 //import * as ReactDOM from "react-dom";
-import ProseMirror from 'react-prosemirror'
 
 window.exports.viewer = (function () {
+
   function capture(el) {
     var mySVG = $(el).html();
     return mySVG;
   }
-  var Timer = React.createClass({
-    tick: function() {
-      let secondsElapsed = this.props.secondsElapsed;
-      let state = {
-        secondsElapsed: (secondsElapsed ? secondsElapsed : 0) + 5
-      };
-      // To save state, dispatch it as a property named 'data'. This will save
-      // the state to the server, update the URL and the props used to render
-      // the view.
-      window.dispatcher.dispatch({
-        data: state,
-      });
+
+  var mapLoaded = false;
+  function loadAPI() {
+	  var script = document.createElement("script");
+    // FIXME hide key
+	  script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD-Ew4Y6QOdfXSKrBdzhPsP2AIJZzE-Hv4&callback=loadMaps";
+	  script.type = "text/javascript";
+	  document.getElementsByTagName("head")[0].appendChild(script);
+  }
+  let map;
+  function showMap(options) {
+	  if(!mapLoaded) {
+		  alert('maps api not loaded yet');
+		  return;
+	  }
+    if (!map) {
+      map = new google.maps.Map(document.getElementById('map-panel'), options);
+    } else {
+      map.setOptions(options);
+    }
+    if (!map) {
+      alert("no map created");
+    }
+  }
+  var Map = React.createClass({
+    componentWillMount: function () {
+      loadAPI();
+      var self = this;
+      // This is called when the Maps API is loaded.
+      window.loadMaps = function loadMaps() {
+	      mapLoaded = true;
+        self.forceUpdate();
+      }
     },
-    componentDidMount: function() {
-      this.interval = setInterval(this.tick, 5000);
+    componentDidUpdate: function() {
+      if (mapLoaded) {
+        let options = this.props.data ? this.props.data[0].options : {
+          center: {lat: 0, lng: 0},
+          zoom: 1
+        };
+        showMap(options);
+      }
     },
     componentWillUnmount: function() {
       clearInterval(this.interval);
     },
     render: function() {
       return (
-          <div>{this.props.secondsElapsed?this.props.secondsElapsed:0}</div>
+          <div style={{width: "640px", height: "480px"}} id="map-panel" />
       );
-    }
-  });
-
-  const Prose = React.createClass({
-    getInitialState() {
-      return {
-        value: 'Hello World!'
-      };
-    },
-    render() {
-      let options = {
-        options: {
-          docFormat: 'text',
-          place: 'graff-view',
-        }
-      };
-      return <ProseMirror value={this.state.value} onChange={this.onChange} {...options} ref="pm" />
-    },
-    onChange(value) {
-      this.setState({value});
     }
   });
 
@@ -79,11 +86,10 @@ window.exports.viewer = (function () {
             style[p.key[0]] = p.val.value;
           });
         }
-        if (d.value === "$$timer$$") {
-          elts.push(<span key={i} style={style}><Timer {...props}/></span>);
-        } else if (d.value === "$$prose$$") {
-          return <Prose id="editor" style={style}/>;
+        if (d.type === "map") {
+          elts.push(<div key={i}><Map {...props}/></div>);
         } else {
+          // Render a string
           elts.push(<span key={i} style={style}>{""+d.value}</span>);
         }
       });
