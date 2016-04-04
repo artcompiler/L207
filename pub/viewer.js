@@ -19088,10 +19088,6 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 /* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* Copyright (c) 2015, Art Compiler LLC */
-/*
-   TODO
-   -- Update code based on user intput.
-*/
 window.exports.viewer = function () {
 
   function capture(el) {
@@ -19147,7 +19143,17 @@ window.exports.viewer = function () {
       clearInterval(this.interval);
     },
     render: function render() {
-      return React.createElement("div", { style: { width: "640px", height: "480px" }, id: "map-panel" });
+      var data = this.props.data ? this.props.data[0] : null;
+      console.log(data);
+      if (!data.height) {
+        data.height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        data.height -= 100;
+      }
+      if (!data.width) {
+        data.width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        data.width -= 20;
+      }
+      return React.createElement("div", { style: { width: data.width, height: data.height }, id: "map-panel" });
     }
   });
 

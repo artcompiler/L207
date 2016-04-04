@@ -66,6 +66,22 @@ let translate = (function() {
       },
     });
   };
+  function height(node, options, resume){
+    visit(node.elts[0], options, function (err1, val1) {
+      visit(node.elts[1], options, function (err2, val2) {
+        val1.height = +val2;
+        resume([].concat(err1).concat(err2), val1);
+      });
+    });
+  };
+  function width(node, options, resume){
+    visit(node.elts[0], options, function (err1, val1) {
+      visit(node.elts[1], options, function (err2, val2) {
+        val1.width = +val2;
+        resume([].concat(err1).concat(err2), val1);
+      });
+    });
+  }
   function center(node, options, resume) {
     visit(node.elts[0], options, function (err1, val1) {
       visit(node.elts[1], options, function (err2, val2) {
@@ -172,6 +188,8 @@ let translate = (function() {
     "CENTER" : center,
     "ZOOM" : zoom,
     "STYLE" : style,
+    "HEIGHT" : height,
+    "WIDTH" : width,
   }
   return translate;
 })();
