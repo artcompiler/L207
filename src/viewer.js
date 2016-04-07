@@ -96,7 +96,21 @@ window.exports.viewer = (function () {
   }
   function geocodeAddress(geocoder, resultsMap, address) {
     let locations = [];
-    var add = [].concat(JSON.parse(JSON.stringify(address)));
+    //do an initial iteration through to deal with the lat/lng locations?
+    //console.log(new google.maps.LatLng(-34, 151));
+    var add = [];
+    ([].concat(JSON.parse(JSON.stringify(address)))).forEach(function (d, i){
+      if(d.lat && d.lng){
+        var ll = new google.maps.LatLng(+d.lat, +d.lng);
+        new google.maps.Marker({
+          map: map,
+          position: ll
+        });     
+        locations.push(ll);
+      } else {
+        add.push(d);
+      }
+    });
     geocoder.geocode({'address': add.shift()}, function(results, status){
       var loc = parse(results, status, geocoder, locations, add);
     });
