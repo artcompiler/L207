@@ -19104,7 +19104,8 @@ window.exports.viewer = function () {
     document.getElementsByTagName("head")[0].appendChild(script);
   }
   var map = void 0;
-  function showMap(options) {
+  var geocoder = void 0;
+  function showMap(options, address) {
     if (!mapLoaded) {
       alert('maps api not loaded yet');
       return;
@@ -19114,9 +19115,78 @@ window.exports.viewer = function () {
     } else {
       map.setOptions(options);
     }
+    if (!geocoder) {
+      geocoder = new google.maps.Geocoder();
+    }
+    if (address) {
+      geocodeAddress(geocoder, map, address);
+    }
     if (!map) {
       alert("no map created");
     }
+  }
+  //don't need to get the text box because of how this works
+  function midpoint(locations) {
+    var x = 0;
+    var y = 0;
+    var z = 0;
+    locations.forEach(function (d, i) {
+      //convert to radians (Math.PI/180) and to Cartesian coordinates
+      var lat1 = d.lat() * Math.PI / 180;
+      var lon1 = d.lng() * Math.PI / 180;
+      //add the Cartesian coordinates to x y and z
+      x += Math.cos(lat1) * Math.cos(lon1);
+      y += Math.cos(lat1) * Math.sin(lon1);
+      z += Math.sin(lat1);
+    });
+    //divide by the number
+    x = x / locations.length;
+    y = y / locations.length;
+    z = z / locations.length;
+    var longitude = Math.atan2(y, x) * (180 / Math.PI);
+    var latitude = Math.atan2(z, Math.sqrt(x * x + y * y)) * (180 / Math.PI);
+    return [latitude, longitude];
+  }
+  function parse(results, status, geocoder, locations, add, center) {
+    if (status === google.maps.GeocoderStatus.OK) {
+      //store the location in some way to determine center
+      locations.push(results[0].geometry.location);
+      var marker = new google.maps.Marker({
+        map: map,
+        position: results[0].geometry.location
+      });
+      //check if there's another address in some way, and if so check that one
+      var nex = add.shift();
+      if (nex !== undefined) {
+        geocoder.geocode({ 'address': nex }, function (results, status) {
+          parse(results, status, geocoder, locations, add);
+        });
+      } else {
+        //the bottom-most layer.
+        //should be able to handle positioning stuff in here with the map
+        var c = map.getCenter();
+        if (c.lat() == 0 && c.lng() == 0) {
+          var cent = [0, 0];
+          if (locations.length > 1) {
+            cent = midpoint(locations);
+          } else {
+            cent = [locations[0].lat(), locations[0].lng()];
+          }
+          map.setCenter({ lat: cent[0], lng: cent[1] });
+        }
+      }
+    } else {
+      console.log("Geocode unsuccessful: " + status);
+    }
+    return results[0].geometry.location;
+  }
+  function geocodeAddress(geocoder, resultsMap, address) {
+    var locations = [];
+    var add = [].concat(JSON.parse(JSON.stringify(address)));
+    geocoder.geocode({ 'address': add.shift() }, function (results, status) {
+      var loc = parse(results, status, geocoder, locations, add);
+    });
+    return locations; //let the calculations be handled elsewhere
   }
   var Map = React.createClass({
     displayName: "Map",
@@ -19132,11 +19202,13 @@ window.exports.viewer = function () {
     },
     componentDidUpdate: function componentDidUpdate() {
       if (mapLoaded) {
+        //best place to handle markers would likely be here.
         var options = this.props.data ? this.props.data[0].options : {
           center: { lat: 0, lng: 0 },
           zoom: 1
         };
-        showMap(options);
+        var address = this.props.data ? this.props.data[0].address : null;
+        showMap(options, address);
       }
     },
     componentWillUnmount: function componentWillUnmount() {
@@ -19144,7 +19216,6 @@ window.exports.viewer = function () {
     },
     render: function render() {
       var data = this.props.data ? this.props.data[0] : null;
-      console.log(data);
       if (!data.height) {
         data.height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
         data.height -= 100;
