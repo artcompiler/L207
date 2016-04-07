@@ -19197,9 +19197,22 @@ window.exports.viewer = function () {
         add.push(d);
       }
     });
-    geocoder.geocode({ 'address': add.shift() }, function (results, status) {
-      var loc = parse(results, status, geocoder, locations, add);
-    });
+    if (add.length) {
+      geocoder.geocode({ 'address': add.shift() }, function (results, status) {
+        var loc = parse(results, status, geocoder, locations, add);
+      });
+    } else {
+      var c = map.getCenter();
+      if (c.lat() == 0 && c.lng() == 0) {
+        var cent = [0, 0];
+        if (locations.length > 1) {
+          cent = midpoint(locations);
+        } else {
+          cent = [locations[0].lat(), locations[0].lng()];
+        }
+        map.setCenter({ lat: cent[0], lng: cent[1] });
+      }
+    }
     return locations; //let the calculations be handled elsewhere
   }
   var Map = React.createClass({
