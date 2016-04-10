@@ -27,20 +27,88 @@ window.exports.viewer = (function () {
 		  alert('maps api not loaded yet');
 		  return;
 	  }
+    if (!geocoder){
+      geocoder = new google.maps.Geocoder();
+    }
+    if(options.center && !options.center.lat){
+      var cen = options.center;
+      options.center = null;
+      geocoder.geocode({'address': cen}, function(results, status){
+        options.center = parse(results, status, geocoder, [], []);
+        map.setOptions(options);
+      });
+    }
     if (!map) {
       map = new google.maps.Map(document.getElementById('map-panel'), options);
     } else {
       map.setOptions(options);
     }
-    if (!geocoder){
-      geocoder = new google.maps.Geocoder();
-    }
-    if(address){geocodeAddress(geocoder, map, address);}
+    if(address){geocodeAddress(geocoder, address);}
     if (!map) {
       alert("no map created");
     }
   }
-  //don't need to get the text box because of how this works
+  function geocodeAddress(geocoder, address) {
+    let locations = [];
+    //do an initial iteration through to deal with the lat/lng locations?
+    //console.log(new google.maps.LatLng(-34, 151));
+    var add = [];
+    ([].concat(JSON.parse(JSON.stringify(address)))).forEach(function (d, i){
+      if(d.lat && d.lng){
+        locations.push(new google.maps.LatLng(+d.lat, +d.lng));
+      } else {
+        add.push(d);
+      }
+    });
+    if(add.length){
+      geocoder.geocode({'address': add.shift()}, function(results, status){
+        var loc = parse(results, status, geocoder, locations, add, mark);
+      });
+    } else {
+      mark(locations);
+      var c = map.getCenter();
+      if(c && c.lat() == 0 && c.lng() == 0){
+        var cent = [0, 0];
+        if(locations.length > 1){
+          cent = midpoint(locations);
+        } else {
+          cent = [locations[0].lat(), locations[0].lng()];
+        }
+        map.setCenter({lat: cent[0], lng: cent[1]});
+      }
+    }
+    return locations;//let the calculations be handled elsewhere
+  }
+  function parse(results, status, geocoder, locations, add, callback){
+    if(status === google.maps.GeocoderStatus.OK) {
+      //store the location in some way to determine center
+      locations.push(results[0].geometry.location);
+      //check if there's another address in some way, and if so check that one
+      var nex = add.shift();
+      if(nex !== undefined){
+        geocoder.geocode({'address': nex}, function(results, status){
+          parse(results, status, geocoder, locations, add);
+        });
+      } else {//the bottom-most layer.
+        //should be able to handle positioning stuff in here with the map
+        //put any needed callback in here
+        if(callback){callback(locations);}
+        if(map){var c = map.getCenter();}
+        if(c && c.lat() == 0 && c.lng() == 0){
+          var cent = [0, 0];
+          if(locations.length > 1){
+            cent = midpoint(locations);
+          } else {
+            cent = [locations[0].lat(), locations[0].lng()];
+          }
+          map.setCenter({lat: cent[0], lng: cent[1]});
+        }
+      }
+    } else {
+      console.log("Geocode unsuccessful: " + status);
+    }
+    return results[0].geometry.location;
+  }
   function midpoint(locations){
     var x = 0;
     var y = 0;
@@ -62,72 +130,15 @@ window.exports.viewer = (function () {
     var latitude = (Math.atan2(z, Math.sqrt(x*x + y*y)))*(180/Math.PI);
     return [latitude, longitude];
   }
-  function parse(results, status, geocoder, locations, add, center){
-    if(status === google.maps.GeocoderStatus.OK) {
-      //store the location in some way to determine center
-      locations.push(results[0].geometry.location);
-      var marker = new google.maps.Marker({
+  function mark(locations){
+    var markers = [];
+    locations.forEach(function (d, i){
+      markers.push(new google.maps.Marker({
         map: map,
-        position: results[0].geometry.location
-      });
-      //check if there's another address in some way, and if so check that one
-      var nex = add.shift();
-      if(nex !== undefined){
-        geocoder.geocode({'address': nex}, function(results, status){
-          parse(results, status, geocoder, locations, add);
-        });
-      } else {//the bottom-most layer.
-        //should be able to handle positioning stuff in here with the map
-        var c = map.getCenter();
-        if(c.lat() == 0 && c.lng() == 0){
-          var cent = [0, 0];
-          if(locations.length > 1){
-            cent = midpoint(locations);
-          } else {
-            cent = [locations[0].lat(), locations[0].lng()];
-          }
-          map.setCenter({lat: cent[0], lng: cent[1]});
-        }
-      }
-    } else {
-      console.log("Geocode unsuccessful: " + status);
-    }
-    return results[0].geometry.location;
-  }
-  function geocodeAddress(geocoder, resultsMap, address) {
-    let locations = [];
-    //do an initial iteration through to deal with the lat/lng locations?
-    //console.log(new google.maps.LatLng(-34, 151));
-    var add = [];
-    ([].concat(JSON.parse(JSON.stringify(address)))).forEach(function (d, i){
-      if(d.lat && d.lng){
-        var ll = new google.maps.LatLng(+d.lat, +d.lng);
-        new google.maps.Marker({
-          map: map,
-          position: ll
-        });
-        locations.push(ll);
-      } else {
-        add.push(d);
-      }
+        position: d
+      }));
     });
-    if(add.length){
-      geocoder.geocode({'address': add.shift()}, function(results, status){
-        var loc = parse(results, status, geocoder, locations, add);
-      });
-    } else {
-      var c = map.getCenter();
-      if(c.lat() == 0 && c.lng() == 0){
-        var cent = [0, 0];
-        if(locations.length > 1){
-          cent = midpoint(locations);
-        } else {
-          cent = [locations[0].lat(), locations[0].lng()];
-        }
-        map.setCenter({lat: cent[0], lng: cent[1]});
-      }
-    }
-    return locations;//let the calculations be handled elsewhere
+    return markers;
   }
   var Map = React.createClass({
     componentWillMount: function () {
