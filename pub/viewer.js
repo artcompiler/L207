@@ -19182,68 +19182,6 @@ window.exports.viewer = function () {
       console.log("Geocode unsuccessful: " + status);
     }
   }
-  /*function midpoint(locations){
-    var x = 0;
-    var y = 0;
-    var z = 0;
-    locations.forEach(function(d, i){
-      //convert to radians (Math.PI/180) and to Cartesian coordinates
-      var lat1 = d.lat()*Math.PI/180;
-      var lon1 = d.lng()*Math.PI/180;
-      //add the Cartesian coordinates to x y and z
-      x += Math.cos(lat1)*Math.cos(lon1);
-      y += Math.cos(lat1)*Math.sin(lon1);
-      z += Math.sin(lat1);
-    });
-    //divide by the number
-    x = x/locations.length;
-    y = y/locations.length;
-    z = z/locations.length;
-    var longitude = (Math.atan2(y, x))*(180/Math.PI);
-    var latitude = (Math.atan2(z, Math.sqrt(x*x + y*y)))*(180/Math.PI);
-    return [latitude, longitude];
-  }*/
-  /*function center(locations){
-    if(map){var c = map.getCenter();}
-    if(c && (c.lat() == 0 && c.lng() == 0)){
-      var cent = [0, 0];
-      if(locations.length > 1){
-        cent = midpoint(locations);
-      } else {
-        cent = [locations[0].lat(), locations[0].lng()];
-      }
-      if(map){
-        map.setCenter({lat: cent[0], lng: cent[1]});
-      }
-    }
-  }*/
-  /*function zoom(locations){
-    if(true){//change this to an actual zoom check when you figure out how to check for that
-      var dist = 0;
-      var d, dlon, dlat, a, c, l1, l2;
-      //compare the distances between each two locations to find the largest.
-      //same city: around 0.5, 0.5 ---> 10
-      //same continent: 8-10, 5-10 ---> 5
-      //clamping anything excessive to 1 is fine.
-      locations.forEach(function (d1, i1){
-        locations.forEach(function (d2, i2){
-          if (i1 < i2){//don't check if it's the same, obviously, and if it's lower it's been done
-            //alter this to convert to radians.
-            l1 = [d1.lat()*Math.PI/180, d1.lng()*Math.PI/180];
-            l2 = [d2.lat()*Math.PI/180, d2.lng()*Math.PI/180]
-            dlon = l2[1] - l1[1];
-            dlat = l2[0] - l1[0];
-            a = Math.pow(Math.sin(dlat/2), 2) + Math.cos(l1[0])*Math.cos(l2[0])*Math.pow(Math.sin(dlon/2), 2);
-            c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            dist = Math.max(dist, c);
-          }
-        });
-      });
-      //zoom is on some weird scale look into it
-      //591657550.500000 / 2^(level-1) so it's inverse log thereabouts?
-      console.log(dist);
-    }
-  }*/
   function mark(locations, options) {
     var markers = [];
     var markerBounds = new google.maps.LatLngBounds();
