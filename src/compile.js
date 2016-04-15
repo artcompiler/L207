@@ -57,13 +57,7 @@ let translate = (function() {
   function map(node, options, resume) {
     resume([], {
       type: "map",
-      options: {
-        zoom: 1,
-        center: {
-          lat: 0,
-          lng: 0,
-        },
-      },
+      options: {},
     });
   };
   function location(node, options, resume){
