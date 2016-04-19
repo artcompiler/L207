@@ -22,6 +22,12 @@ window.exports.viewer = (function () {
   }
   let map;
   let geocoder;
+  let markers = [];
+  function save() {//dispatch
+    //Minimum info: getCenter, getZoom, some way to get markers.
+    //window.dispatcher.dispatch({})
+    //window.dispatcher.isDispatching()
+  }
   function showMap(options, address) {
 	  if(!mapLoaded) {
 		  alert('maps api not loaded yet');
@@ -40,6 +46,8 @@ window.exports.viewer = (function () {
     }
     if (!map) {
       map = new google.maps.Map(document.getElementById('map-panel'), options);
+      //map.addListener("dragend", save);
+      //map.addListener("tiles_loaded", save);
     } else {
       map.setOptions(options);
     }
@@ -91,7 +99,6 @@ window.exports.viewer = (function () {
     }
   }
   function mark(locations, options){
-    var markers = [];
     var markerBounds = new google.maps.LatLngBounds();
     locations.forEach(function (d, i){
       markers.push(new google.maps.Marker({
@@ -124,6 +131,10 @@ window.exports.viewer = (function () {
     componentDidUpdate: function() {
       if (mapLoaded) {
         //best place to handle markers would likely be here.
+        markers.forEach(function (d, i){
+          d.setMap(null);
+        });
+        markers = [];
         let options = this.props.data[0].options;
         let address = this.props.data ? this.props.data[0].address : null;
         showMap(options, address);
