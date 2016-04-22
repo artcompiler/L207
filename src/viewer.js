@@ -20,12 +20,23 @@ window.exports.viewer = (function () {
 	  script.type = "text/javascript";
 	  document.getElementsByTagName("head")[0].appendChild(script);
   }
+  let markerflag = true;
   let map;
   let geocoder;
   let markers = [];
   function save() {//dispatch
     //Minimum info: getCenter, getZoom, some way to get markers.
-    //window.dispatcher.dispatch({})
+    if(markerflag && !window.dispatcher.isDispatching()){
+      window.dispatcher.dispatch({
+        data: {
+          options: {
+            center: map.getCenter(),
+            zoom: map.getZoom()
+          },
+          markers: markers
+        }
+      });
+    }
     //window.dispatcher.isDispatching()
   }
   function showMap(options, address) {
@@ -46,8 +57,8 @@ window.exports.viewer = (function () {
     }
     if (!map) {
       map = new google.maps.Map(document.getElementById('map-panel'), options);
-      //map.addListener("dragend", save);
-      //map.addListener("tiles_loaded", save);
+      map.addListener("dragend", save);
+      map.addListener("zoom_changed", save);
     } else {
       map.setOptions(options);
     }
@@ -116,6 +127,7 @@ window.exports.viewer = (function () {
     } else {//if not center
       map.setCenter(center);
     }
+    markerflag = true;
     return markers;
   }
   var Map = React.createClass({
@@ -128,6 +140,9 @@ window.exports.viewer = (function () {
         self.forceUpdate();
       }
     },
+    componentWillUpdate: function() {
+      markerflag = false;
+    },
     componentDidUpdate: function() {
       if (mapLoaded) {
         //best place to handle markers would likely be here.
@@ -135,8 +150,9 @@ window.exports.viewer = (function () {
           d.setMap(null);
         });
         markers = [];
-        let options = this.props.data[0].options;
+        let options = this.props.options || this.props.data[0].options;
         let address = this.props.data ? this.props.data[0].address : null;
+
         showMap(options, address);
       }
     },

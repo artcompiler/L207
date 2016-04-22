@@ -19103,12 +19103,24 @@ window.exports.viewer = function () {
     script.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(script);
   }
+  var markerflag = true;
   var map = void 0;
   var geocoder = void 0;
   var markers = [];
-  function save() {//dispatch
+  function save() {
+    //dispatch
     //Minimum info: getCenter, getZoom, some way to get markers.
-    //window.dispatcher.dispatch({})
+    if (markerflag && !window.dispatcher.isDispatching()) {
+      window.dispatcher.dispatch({
+        data: {
+          options: {
+            center: map.getCenter(),
+            zoom: map.getZoom()
+          },
+          markers: markers
+        }
+      });
+    }
     //window.dispatcher.isDispatching()
   }
   function showMap(options, address) {
@@ -19131,11 +19143,11 @@ window.exports.viewer = function () {
     }
     if (!map) {
       map = new google.maps.Map(document.getElementById('map-panel'), options);
-      //map.addListener("dragend", save);
-      //map.addListener("tiles_loaded", save);
+      map.addListener("dragend", save);
+      map.addListener("zoom_changed", save);
     } else {
-        map.setOptions(options);
-      }
+      map.setOptions(options);
+    }
     if (address) {
       geocodeAddress(geocoder, address, options);
     }
@@ -19211,6 +19223,7 @@ window.exports.viewer = function () {
       //if not center
       map.setCenter(center);
     }
+    markerflag = true;
     return markers;
   }
   var Map = React.createClass({
@@ -19225,6 +19238,9 @@ window.exports.viewer = function () {
         self.forceUpdate();
       };
     },
+    componentWillUpdate: function componentWillUpdate() {
+      markerflag = false;
+    },
     componentDidUpdate: function componentDidUpdate() {
       if (mapLoaded) {
         //best place to handle markers would likely be here.
@@ -19232,8 +19248,9 @@ window.exports.viewer = function () {
           d.setMap(null);
         });
         markers = [];
-        var options = this.props.data[0].options;
+        var options = this.props.options || this.props.data[0].options;
         var address = this.props.data ? this.props.data[0].address : null;
+
         showMap(options, address);
       }
     },
