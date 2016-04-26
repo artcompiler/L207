@@ -19249,7 +19249,6 @@ window.exports.viewer = function () {
         });
         markers = [];
         var options = this.props.options || this.props.data[0].options;
-        console.log(options);
         var address = this.props.data ? this.props.data[0].address : null;
         showMap(options, address);
       }
