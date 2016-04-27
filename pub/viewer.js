@@ -19103,7 +19103,7 @@ window.exports.viewer = function () {
     script.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(script);
   }
-  var markerflag = true;
+  var markerflag = false;
   var map = void 0;
   var geocoder = void 0;
   var markers = [];
@@ -19121,7 +19121,6 @@ window.exports.viewer = function () {
         }
       });
     }
-    //window.dispatcher.isDispatching()
   }
   function showMap(options, address) {
     if (!mapLoaded) {

@@ -20,7 +20,7 @@ window.exports.viewer = (function () {
 	  script.type = "text/javascript";
 	  document.getElementsByTagName("head")[0].appendChild(script);
   }
-  let markerflag = true;
+  let markerflag = false;
   let map;
   let geocoder;
   let markers = [];
@@ -37,7 +37,6 @@ window.exports.viewer = (function () {
         }
       });
     }
-    //window.dispatcher.isDispatching()
   }
   function showMap(options, address) {
 	  if(!mapLoaded) {
