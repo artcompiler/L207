@@ -20,7 +20,7 @@ window.exports.viewer = (function () {
 	  script.type = "text/javascript";
 	  document.getElementsByTagName("head")[0].appendChild(script);
   }
-  let markerflag = false;
+  let markerflag = true;
   let map;
   let geocoder;
   let markers = [];
@@ -56,7 +56,7 @@ window.exports.viewer = (function () {
     }
     if (!map) {
       map = new google.maps.Map(document.getElementById('map-panel'), options);
-      map.addListener("center_changed", save);
+      map.addListener("dragend", save);
       map.addListener("zoom_changed", save);
     } else {
       map.setOptions(options);
