@@ -123,9 +123,9 @@ window.exports.viewer = (function () {
     }
     if(!options.center){//if center needs to be defined, redundant if we fitbounds, but that's fine.
       map.setCenter(markerBounds.getCenter());
-    } else if(!options.zoom) {//if not center but zoom required fitbounds
+    }/* else if(!options.zoom) {//if not center but zoom required fitbounds
       map.setCenter(center);
-    }
+    }*/
     markerflag = true;
     return markers;
   }
