@@ -149,7 +149,7 @@ window.exports.viewer = (function () {
           d.setMap(null);
         });
         markers = [];
-        let options = this.props.options || this.props.data[0].options;
+        let options = this.props.options ? this.props.options : this.props.data[0].options;
         console.log(options);
         let address = this.props.data ? this.props.data[0].address : null;
         showMap(options, address);
