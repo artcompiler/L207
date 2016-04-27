@@ -56,7 +56,7 @@ window.exports.viewer = (function () {
     }
     if (!map) {
       map = new google.maps.Map(document.getElementById('map-panel'), options);
-      map.addListener("dragend", save);
+      map.addListener("center_changed", save);
       map.addListener("zoom_changed", save);
     } else {
       map.setOptions(options);
@@ -150,6 +150,7 @@ window.exports.viewer = (function () {
         });
         markers = [];
         let options = this.props.options || this.props.data[0].options;
+        console.log(options);
         let address = this.props.data ? this.props.data[0].address : null;
         showMap(options, address);
       }
