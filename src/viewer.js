@@ -181,6 +181,7 @@ window.exports.viewer = (function () {
     render: function () {
       // If you have nested components, make sure you send the props down to the
       // owned components.
+      console.log(this.props);
       var props = this.props;
       var data = props.data ? props.data : [];
       var elts = [];
