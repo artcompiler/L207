@@ -68,6 +68,19 @@ let translate = (function() {
       });
     });
   };
+  function directions(node, options, resume){
+    visit(node.elts[0], options, function (err1, val1) {
+      visit(node.elts[1], options, function (err2, val2) {
+        visit(node.elts[2], options, function (err3, val3) {
+          val1.directions = {
+            locations: val3,
+            travelmode: val2
+          };
+          resume([].concat(err1).concat(err2).concat(err3), val1);
+        });       
+      });
+    });
+  };
   function height(node, options, resume){
     visit(node.elts[0], options, function (err1, val1) {
       visit(node.elts[1], options, function (err2, val2) {
@@ -193,6 +206,7 @@ let translate = (function() {
     "HEIGHT" : height,
     "WIDTH" : width,
     "LOCATION": location,
+    "DIRECTIONS": directions,
   }
   return translate;
 })();

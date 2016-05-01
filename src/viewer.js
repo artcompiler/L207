@@ -24,6 +24,7 @@ window.exports.viewer = (function () {
   let map;
   let geocoder;
   let markers = [];
+  let geocodes = {};
   function save() {//dispatch
     //Minimum info: getCenter, getZoom, some way to get markers.
     if(markerflag && !window.dispatcher.isDispatching()){
@@ -74,16 +75,20 @@ window.exports.viewer = (function () {
     ([].concat(JSON.parse(JSON.stringify(address)))).forEach(function (d, i){
       if(d.lat && d.lng){
         locations.push(new google.maps.LatLng(+d.lat, +d.lng));
+      } else if(geocodes[d] !== undefined) {
+        locations.push(geocodes[d]);
       } else {
         add.push(d);
       }
     });
     if(add.length){
-      geocoder.geocode({'address': add.shift()}, function(results, status){
+      var nex = add.shift();
+      geocoder.geocode({'address': nex}, function(results, status){
         var loc = parse(results, status, geocoder, locations, add, mark, options);
+        geocodes[nex] = loc;
       });
     } else {
-      mark(locations);
+      mark(locations, options);
     }
     return locations;//let the calculations be handled elsewhere
   }
@@ -95,15 +100,15 @@ window.exports.viewer = (function () {
       var nex = add.shift();
       if(nex !== undefined){
         geocoder.geocode({'address': nex}, function(results, status){
-          parse(results, status, geocoder, locations, add, callback, options);
+          var loc = parse(results, status, geocoder, locations, add, callback, options);
+          geocodes[nex] = loc;
         });
       } else {//the bottom-most layer.
         //should be able to handle positioning stuff in here with the map
         //put any needed callback in here
-        if(callback){return callback(locations, options);}
-        //I believe that 'return the location' is a reasonable default behavior for a geocode parser.
-        else {return results[0].geometry.location;}
+        if(callback){callback(locations, options);}
       }
+      return results[0].geometry.location;
     } else {
       console.log("Geocode unsuccessful: " + status);
     }
@@ -123,9 +128,9 @@ window.exports.viewer = (function () {
     }
     if(!options.center){//if center needs to be defined, redundant if we fitbounds, but that's fine.
       map.setCenter(markerBounds.getCenter());
-    }/* else if(!options.zoom) {//if not center but zoom required fitbounds
+    } else if(!options.zoom) {//if not center but zoom required fitbounds
       map.setCenter(center);
-    }*/
+    }
     markerflag = true;
     return markers;
   }
@@ -150,7 +155,6 @@ window.exports.viewer = (function () {
         });
         markers = [];
         let options = this.props.options ? this.props.options : this.props.data[0].options;
-        console.log(options);
         let address = this.props.data ? this.props.data[0].address : null;
         showMap(options, address);
       }
@@ -182,7 +186,6 @@ window.exports.viewer = (function () {
     render: function () {
       // If you have nested components, make sure you send the props down to the
       // owned components.
-      console.log(this.props);
       var props = this.props;
       var data = props.data ? props.data : [];
       var elts = [];

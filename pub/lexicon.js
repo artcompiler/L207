@@ -7,4 +7,5 @@ exports.globalLexicon = {
     "height" : { "tk": 0x01, "name": "HEIGHT", "cls": "function", "length": 2, "arity": 2 },
     "width" : { "tk": 0x01, "name": "WIDTH", "cls": "function", "length": 2, "arity": 2 },
     "location" : { "tk": 0x01, "name": "LOCATION", "cls": "function", "length": 2, "arity": 2 },
+    "directions" : { "tk": 0x01, "name": "DIRECTIONS", "cls": "function", "length": 3, "arity": 3 },
 };
