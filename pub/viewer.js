@@ -19106,6 +19106,8 @@ window.exports.viewer = function () {
   var markerflag = true;
   var map = void 0;
   var geocoder = void 0;
+  var directionsService = void 0;
+  var directionsRenderer = void 0;
   var markers = [];
   var geocodes = {};
   function save() {
@@ -19123,7 +19125,7 @@ window.exports.viewer = function () {
       });
     }
   }
-  function showMap(options, address) {
+  function showMap(options, address, directions) {
     if (!mapLoaded) {
       alert('maps api not loaded yet');
       return;
@@ -19131,15 +19133,28 @@ window.exports.viewer = function () {
     if (!geocoder) {
       geocoder = new google.maps.Geocoder();
     }
+    if (!directionsService) {
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer.setOptions({ preserveViewport: true });
+    } else {
+      directionsRenderer.setMap(null);
+    }
     if (options.center && !options.center.lat) {
       var cen = options.center;
       options.center = null;
-      geocoder.geocode({ 'address': cen }, function (results, status) {
-        options.center = parse(results, status, geocoder, [], []);
-        if (map) {
-          map.setOptions(options);
-        }
-      });
+      if (geocodes[cen] !== undefined) {
+        options.center = geocodes[cen];
+      } else {
+        geocoder.geocode({ 'address': cen }, function (results, status) {
+          var loc = parse(results, status, geocoder, [], []);
+          options.center = loc;
+          geocodes[cen] = loc;
+          if (map) {
+            map.setOptions(options);
+          }
+        });
+      }
     }
     if (!map) {
       map = new google.maps.Map(document.getElementById('map-panel'), options);
@@ -19148,14 +19163,40 @@ window.exports.viewer = function () {
     } else {
       map.setOptions(options);
     }
+    var length = address.length;
+    if (directions) {
+      directionsRenderer.setMap(map);
+      address = address.concat(directions.locations);
+      var request = {
+        origin: directions.locations.shift(),
+        destination: directions.locations.pop(),
+        travelMode: google.maps.TravelMode[directions.travelmode.toUpperCase()]
+      };
+      var waypoints = [];
+      directions.locations.forEach(function (d, i) {
+        waypoints.push({
+          location: d,
+          stopover: true
+        });
+      });
+      request.waypoints = waypoints;
+      directionsService.route(request, function (result, status) {
+        if (status == google.maps.DirectionsStatus.OK) {
+          directionsRenderer.setDirections(result);
+        } else {
+          console.log("Route creation unsuccessful: " + status);
+        }
+      });
+    }
     if (address) {
-      geocodeAddress(geocoder, address, options);
+      options.length = length;
+      geocodeAddress(address, options);
     }
     if (!map) {
       alert("no map created");
     }
   }
-  function geocodeAddress(geocoder, address, options) {
+  function geocodeAddress(address, options) {
     var locations = [];
     //do an initial iteration through to deal with the lat/lng locations?
     //console.log(new google.maps.LatLng(-34, 151));
@@ -19172,15 +19213,14 @@ window.exports.viewer = function () {
     if (add.length) {
       var nex = add.shift();
       geocoder.geocode({ 'address': nex }, function (results, status) {
-        var loc = parse(results, status, geocoder, locations, add, mark, options);
+        var loc = parse(results, status, locations, add, mark, options);
         geocodes[nex] = loc;
       });
     } else {
       mark(locations, options);
     }
-    return locations; //let the calculations be handled elsewhere
   }
-  function parse(results, status, geocoder, locations, add, callback, options) {
+  function parse(results, status, locations, add, callback, options) {
     if (status === google.maps.GeocoderStatus.OK) {
       //store the location in some way to determine center
       locations.push(results[0].geometry.location);
@@ -19188,7 +19228,7 @@ window.exports.viewer = function () {
       var nex = add.shift();
       if (nex !== undefined) {
         geocoder.geocode({ 'address': nex }, function (results, status) {
-          var loc = parse(results, status, geocoder, locations, add, callback, options);
+          var loc = parse(results, status, locations, add, callback, options);
           geocodes[nex] = loc;
         });
       } else {
@@ -19207,10 +19247,12 @@ window.exports.viewer = function () {
   function mark(locations, options) {
     var markerBounds = new google.maps.LatLngBounds();
     locations.forEach(function (d, i) {
-      markers.push(new google.maps.Marker({
-        map: map,
-        position: d
-      }));
+      if (i < options.length) {
+        markers.push(new google.maps.Marker({
+          map: map,
+          position: d
+        }));
+      }
       markerBounds.extend(d);
     });
     var center = map.getCenter(); //save this because fitBounds overwrites it.
@@ -19251,8 +19293,9 @@ window.exports.viewer = function () {
         });
         markers = [];
         var options = this.props.options ? this.props.options : this.props.data[0].options;
-        var address = this.props.data ? this.props.data[0].address : null;
-        showMap(options, address);
+        var address = this.props.data ? this.props.data[0].address || [] : [];
+        var directions = this.props.data ? this.props.data[0].directions : null;
+        showMap(options, address, directions);
       }
     },
     componentWillUnmount: function componentWillUnmount() {
