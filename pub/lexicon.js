@@ -8,4 +8,9 @@ exports.globalLexicon = {
     "width" : { "tk": 0x01, "name": "WIDTH", "cls": "function", "length": 2, "arity": 2 },
     "location" : { "tk": 0x01, "name": "LOCATION", "cls": "function", "length": 2, "arity": 2 },
     "directions" : { "tk": 0x01, "name": "DIRECTIONS", "cls": "function", "length": 3, "arity": 3 },
+    //values
+    "walking" : { "tk": 0x01, "cls": "string", "val": "WALKING", "length": 0 },
+    "driving" : { "tk": 0x01, "cls": "string", "val": "DRIVING", "length": 0 },
+    "bicycling" : { "tk": 0x01, "cls": "string", "val": "BICYCLING", "length": 0 },
+    "transit" : { "tk": 0x01, "cls": "string", "val": "TRANSIT", "length": 0 }
 };
