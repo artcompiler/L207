@@ -19109,6 +19109,7 @@ window.exports.viewer = function () {
   var directionsService = void 0;
   var directionsRenderer = void 0;
   var markers = [];
+  var routes = {};
   var geocodes = {};
   function save() {
     //dispatch
@@ -19167,26 +19168,32 @@ window.exports.viewer = function () {
     if (directions) {
       directionsRenderer.setMap(map);
       address = address.concat(directions.locations);
-      var request = {
-        origin: directions.locations.shift(),
-        destination: directions.locations.pop(),
-        travelMode: google.maps.TravelMode[directions.travelmode.toUpperCase()]
-      };
-      var waypoints = [];
-      directions.locations.forEach(function (d, i) {
-        waypoints.push({
-          location: d,
-          stopover: true
+      var name = directions.locations.toString() + directions.travelmode.toString();
+      if (routes[name] !== undefined) {
+        directionsRenderer.setDirections(routes[directions.locations.toString() + directions.travelmode.toString()]);
+      } else {
+        var request = {
+          origin: directions.locations.shift(),
+          destination: directions.locations.pop(),
+          travelMode: google.maps.TravelMode[directions.travelmode.toUpperCase()]
+        };
+        var waypoints = [];
+        directions.locations.forEach(function (d, i) {
+          waypoints.push({
+            location: d,
+            stopover: true
+          });
         });
-      });
-      request.waypoints = waypoints;
-      directionsService.route(request, function (result, status) {
-        if (status == google.maps.DirectionsStatus.OK) {
-          directionsRenderer.setDirections(result);
-        } else {
-          console.log("Route creation unsuccessful: " + status);
-        }
-      });
+        request.waypoints = waypoints;
+        directionsService.route(request, function (result, status) {
+          if (status == google.maps.DirectionsStatus.OK) {
+            directionsRenderer.setDirections(result);
+            routes[name] = result;
+          } else {
+            console.log("Route creation unsuccessful: " + status);
+          }
+        });
+      }
     }
     if (address) {
       options.length = length;
