@@ -71,15 +71,30 @@ let translate = (function() {
   function directions(node, options, resume){
     visit(node.elts[0], options, function (err1, val1) {
       visit(node.elts[1], options, function (err2, val2) {
-        visit(node.elts[2], options, function (err3, val3) {
-          val1.directions = {
-            locations: val2,
-            travelmode: val3
-          };
-          resume([].concat(err1).concat(err2).concat(err3), val1);
-        });       
+          if(val1.directions){
+            val1.directions.locations = val2;
+          } else {
+            val1.directions = {
+              locations: val2,
+              travelmode: 'DRIVING'
+            };
+          }
+          resume([].concat(err1).concat(err2), val1);     
       });
     });
+  };
+  function travel(node, options, resume){
+    visit(node.elts[0], options, function (err1, val1) {
+      console.log(node.tag);
+      if(val1.directions){
+        val1.directions.travelmode = node.tag;
+      } else {
+        val1.directions = {
+          travelmode: node.tag
+        };
+      }
+      resume([].concat(err1), val1);     
+    });    
   };
   function height(node, options, resume){
     visit(node.elts[0], options, function (err1, val1) {
@@ -207,6 +222,9 @@ let translate = (function() {
     "WIDTH" : width,
     "LOCATION": location,
     "DIRECTIONS": directions,
+    "WALKING": travel,
+    "DRIVING": travel,
+    "BICYCLING": travel,
   }
   return translate;
 })();

@@ -79,7 +79,7 @@ window.exports.viewer = (function () {
       map.setOptions(options);
     }
     var length = address.length;
-    if(directions){
+    if(directions && directions.locations){
       directionsRenderer.setMap(map);
       address = address.concat(directions.locations);
       var name = directions.locations.toString() + directions.travelmode.toString();
@@ -89,7 +89,7 @@ window.exports.viewer = (function () {
         var request = {
           origin:directions.locations.shift(),
           destination:directions.locations.pop(),
-          travelMode:google.maps.TravelMode[directions.travelmode.toUpperCase()]
+          travelMode:google.maps.TravelMode[directions.travelmode]
         };
         var waypoints = [];
         directions.locations.forEach(function(d, i){
