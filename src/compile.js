@@ -225,6 +225,7 @@ let translate = (function() {
     "WALKING": travel,
     "DRIVING": travel,
     "BICYCLING": travel,
+    "TRANSIT": travel,
   }
   return translate;
 })();

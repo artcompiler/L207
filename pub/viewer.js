@@ -19115,18 +19115,27 @@ window.exports.viewer = function () {
     //dispatch
     //Minimum info: getCenter, getZoom, some way to get markers.
     if (markerflag && !window.dispatcher.isDispatching()) {
+      var ml = [];
+      markers.forEach(function (d, i) {
+        ml.push({
+          position: d.getPosition(),
+          visible: d.getVisible(),
+          title: d.getTitle(),
+          icon: d.getIcon()
+        });
+      });
       window.dispatcher.dispatch({
         data: {
           options: {
             center: map.getCenter(),
             zoom: map.getZoom()
           },
-          markers: markers
+          markers: ml
         }
       });
     }
   }
-  function showMap(options, address, directions) {
+  function showMap(options, address, directions, markarray) {
     if (!mapLoaded) {
       alert('maps api not loaded yet');
       return;
@@ -19177,6 +19186,11 @@ window.exports.viewer = function () {
           destination: directions.locations.pop(),
           travelMode: google.maps.TravelMode[directions.travelmode]
         };
+        if (directions.travelmode === "DRIVING" || directions.travelmode === "TRANSIT") {
+          request[directions.travelmode.toLowerCase() + 'Options'] = {
+            departureTime: new Date()
+          };
+        }
         var waypoints = [];
         directions.locations.forEach(function (d, i) {
           waypoints.push({
@@ -19195,18 +19209,45 @@ window.exports.viewer = function () {
         });
       }
     }
-    if (address) {
+    if (markarray) {
+      //no reason to geocode if we have these.
+      marker(markarray);
+    } else if (address) {
       options.length = length;
       geocodeAddress(address, options);
     }
     if (!map) {
       alert("no map created");
     }
+    /*if(thisotherthing){
+      map.addListener('dblclick', function(e){
+        new google.maps.Marker({
+          map: map,
+          position: e.latLng
+        });
+      });
+    }*/
+  }
+  function marker(markarray) {
+    markarray.forEach(function (d, i) {
+      if (d != null) {
+        var m = new google.maps.Marker(d);
+        m.setMap(map);
+        markers.push(m);
+        var ind = markers.length - 1;
+        /*if(thatonething){//add deletion listener
+          m.addListener('dblclick', function() {
+            m.setMap(null);
+            markers.splice(ind, 1);
+            save();
+          });
+        }*/
+      }
+    });
+    markerflag = true;
   }
   function geocodeAddress(address, options) {
     var locations = [];
-    //do an initial iteration through to deal with the lat/lng locations?
-    //console.log(new google.maps.LatLng(-34, 151));
     var add = [];
     [].concat(JSON.parse(JSON.stringify(address))).forEach(function (d, i) {
       if (d.lat && d.lng) {
@@ -19255,10 +19296,18 @@ window.exports.viewer = function () {
     var markerBounds = new google.maps.LatLngBounds();
     locations.forEach(function (d, i) {
       if (i < options.length) {
-        markers.push(new google.maps.Marker({
+        var m = new google.maps.Marker({
           map: map,
           position: d
-        }));
+        });
+        markers.push(m);
+        /*if(thatonething){//add deletion listener
+          m.addListener('dblclick', function() {
+            m.setMap(null);
+            markers.splice(ind, 1);
+            save();
+          });
+        }*/
       }
       markerBounds.extend(d);
     });
@@ -19302,7 +19351,7 @@ window.exports.viewer = function () {
         var options = this.props.options ? this.props.options : this.props.data[0].options;
         var address = this.props.data ? this.props.data[0].address || [] : [];
         var directions = this.props.data ? this.props.data[0].directions : null;
-        showMap(options, address, directions);
+        showMap(options, address, directions, this.props.markers);
       }
     },
     componentWillUnmount: function componentWillUnmount() {
@@ -19331,7 +19380,6 @@ window.exports.viewer = function () {
     render: function render() {
       // If you have nested components, make sure you send the props down to the
       // owned components.
-      console.log(this.props);
       var props = this.props;
       var data = props.data ? props.data : [];
       var elts = [];
