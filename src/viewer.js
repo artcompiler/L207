@@ -5,7 +5,7 @@ import {assert, message, messages, reserveCodeRange} from "./assert";
 import * as React from "react";
 //import * as ReactDOM from "react-dom";
 
-window.exports.viewer = (function () {
+window.gcexports.viewer = (function () {
 
   function capture(el) {
     var mySVG = $(el).html();
